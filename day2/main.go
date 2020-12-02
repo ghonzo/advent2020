@@ -10,9 +10,9 @@ import (
 	"strings"
 )
 
-// Day 2:
-// Part 1 answer:
-// Part 2 answer:
+// Day 2: Password Philosophy
+// Part 1 answer: 474
+// Part 2 answer: 745
 func main() {
 	fmt.Println("Advent of Code 2020, Day 2")
 	const filename = "input.txt"
