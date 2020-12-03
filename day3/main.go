@@ -26,40 +26,35 @@ func main() {
 	fmt.Printf("Part 2: hit trees product =  %d\n", product)
 }
 
-type pos struct {
-	x, y int
-}
-
 type geology struct {
-	trees        map[pos]bool
-	sizeX, sizeY int
-}
-
-func (g geology) hitTree(x, y int) bool {
-	return g.trees[pos{x % g.sizeX, y}]
+	lines []string
 }
 
 func readGeology(r io.Reader) geology {
 	var g geology
-	g.trees = make(map[pos]bool)
 	input := bufio.NewScanner(r)
-	var y int
 	for input.Scan() {
-		line := input.Text()
-		g.sizeX = len(line)
-		for x, ch := range line {
-			g.trees[pos{x, y}] = (ch == '#')
-		}
-		y++
+		g.lines = append(g.lines, input.Text())
 	}
-	g.sizeY = y
 	return g
+}
+
+func (g geology) sizeX() int {
+	return len(g.lines[0])
+}
+
+func (g geology) sizeY() int {
+	return len(g.lines)
+}
+
+func (g geology) hitTree(x, y int) bool {
+	return g.lines[y][x%g.sizeX()] == '#'
 }
 
 func (g geology) hitTreesForSlope(xInc, yInc int) int {
 	var x int
 	var hitTrees int
-	for y := 0; y < g.sizeY; y += yInc {
+	for y := 0; y < g.sizeY(); y += yInc {
 		if g.hitTree(x, y) {
 			hitTrees++
 		}
