@@ -11,9 +11,9 @@ import (
 	"strings"
 )
 
-// Day 4:
-// Part 1 answer:
-// Part 2 answer:
+// Day 4: Passport Processing
+// Part 1 answer: 239
+// Part 2 answer: 188
 func main() {
 	fmt.Println("Advent of Code 2020, Day 4")
 	const filename = "input.txt"
