@@ -58,8 +58,9 @@ func readPassports(r io.Reader) []passport {
 	return append(passports, p)
 }
 
+var requiredFields = [...]string{"byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"}
+
 func (p passport) isValid() bool {
-	var requiredFields = [...]string{"byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"}
 	for _, field := range requiredFields {
 		if _, ok := p[field]; !ok {
 			return false
@@ -68,11 +69,13 @@ func (p passport) isValid() bool {
 	return true
 }
 
-func (p passport) isValid2() bool {
-	hclPattern := regexp.MustCompile("^#[0-9a-f]{6}$")
-	eclPattern := regexp.MustCompile("^(amb|blu|brn|gry|grn|hzl|oth)$")
-	pidPattern := regexp.MustCompile("^\\d{9}$")
+var (
+	hclPattern = regexp.MustCompile("^#[0-9a-f]{6}$")
+	eclPattern = regexp.MustCompile("^(amb|blu|brn|gry|grn|hzl|oth)$")
+	pidPattern = regexp.MustCompile("^\\d{9}$")
+)
 
+func (p passport) isValid2() bool {
 	if v, ok := p["byr"]; !ok {
 		return false
 	} else if byr, err := strconv.Atoi(v); err != nil || byr < 1920 || byr > 2002 {
