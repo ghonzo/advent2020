@@ -29,45 +29,6 @@ func main() {
 	fmt.Printf("Part 2. Total contains = %d", countContained(target, rules)-1)
 }
 
-func countContainedIn(target color, rules map[color][]colorAndQty) int {
-	var count int
-	for bag := range rules {
-		if bagDeepContains(bag, target, rules) {
-			count++
-		}
-	}
-	return count
-}
-
-func bagDeepContains(bag color, target color, rules map[color][]colorAndQty) bool {
-	// This could be much more efficient if we kept intermediate results
-	containsColors := colorsOnly(rules[bag])
-	for len(containsColors) > 0 {
-		if containsColors[0] == target {
-			return true
-		}
-		containsColors = append(containsColors[1:], colorsOnly(rules[containsColors[0]])...)
-	}
-	return false
-}
-
-func colorsOnly(contents []colorAndQty) []color {
-	var colors []color
-	for _, caq := range contents {
-		colors = append(colors, caq.color)
-	}
-	return colors
-}
-
-// Note: includes the containing bag! You may need to subtract 1 to the answer returned
-func countContained(bag color, rules map[color][]colorAndQty) int {
-	count := 1
-	for _, caq := range rules[bag] {
-		count += caq.qty * countContained(caq.color, rules)
-	}
-	return count
-}
-
 type color string
 
 type colorAndQty struct {
@@ -97,4 +58,43 @@ func readRules(r io.Reader) map[color][]colorAndQty {
 		rules[key] = contains
 	}
 	return rules
+}
+
+func colorsOnly(contents []colorAndQty) []color {
+	var colors []color
+	for _, caq := range contents {
+		colors = append(colors, caq.color)
+	}
+	return colors
+}
+
+func countContainedIn(target color, rules map[color][]colorAndQty) int {
+	var count int
+	for bag := range rules {
+		if bagDeepContains(bag, target, rules) {
+			count++
+		}
+	}
+	return count
+}
+
+func bagDeepContains(bag color, target color, rules map[color][]colorAndQty) bool {
+	// This could be much more efficient if we kept intermediate results
+	containsColors := colorsOnly(rules[bag])
+	for len(containsColors) > 0 {
+		if containsColors[0] == target {
+			return true
+		}
+		containsColors = append(containsColors[1:], colorsOnly(rules[containsColors[0]])...)
+	}
+	return false
+}
+
+// Note: includes the containing bag! You may need to subtract 1 to the answer returned
+func countContained(bag color, rules map[color][]colorAndQty) int {
+	count := 1
+	for _, caq := range rules[bag] {
+		count += caq.qty * countContained(caq.color, rules)
+	}
+	return count
 }
