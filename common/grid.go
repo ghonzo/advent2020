@@ -24,6 +24,7 @@ func (p Point) Y() int {
 	return p.y
 }
 
+// Add returns a new Point with x- and y-coordinates added
 func (p Point) Add(q Point) Point {
 	return Point{p.x + q.x, p.y + q.y}
 }
@@ -41,8 +42,11 @@ var (
 	DR = Point{1, 1}
 )
 
+// AllDirections is a slice of all the different offsets that repesent the different
+// directions around a point. Does not include "center" or "zero"
 var AllDirections = []Point{UL, U, UR, L, R, DL, D, DR}
 
+// Grid represents a mutable 2D rectangle with a value at each integer coordinate
 type Grid interface {
 	Size() Point
 	Get(coord Point) byte
@@ -53,16 +57,26 @@ type Grid interface {
 	Clone() Grid
 }
 
+// ArraysGrid is a Grid that has an underlying representation of [][]byte
 type ArraysGrid [][]byte
 
+// Size returns a Point that represents the dimensions of the Grid
 func (g *ArraysGrid) Size() Point {
 	return Point{len((*g)[0]), len(*g)}
 }
 
+// Get returns the value at the given coordinate
+//
+// If the coordinate is outside the dimensions of the Grid, this will throw an error. You may
+// want to use CheckedGet instead
 func (g *ArraysGrid) Get(coord Point) byte {
 	return (*g)[coord.y][coord.x]
 }
 
+// CheckedGet returns the value at the given coordinate (if present), as well as an ok value.
+//
+// If the coordinate is present, it will return the value and an ok value of true. If it is not,
+// it will return 0 and an ok value of false.
 func (g *ArraysGrid) CheckedGet(coord Point) (byte, bool) {
 	size := g.Size()
 	if coord.x < 0 || coord.x >= size.x || coord.y < 0 || coord.y >= size.y {
@@ -71,10 +85,14 @@ func (g *ArraysGrid) CheckedGet(coord Point) (byte, bool) {
 	return g.Get(coord), true
 }
 
+// Set sets a value at the given coordinate.
+//
+// If the coordinate is outside the bounds, this will throw an error.
 func (g *ArraysGrid) Set(coord Point, b byte) {
 	(*g)[coord.y][coord.x] = b
 }
 
+// Count the number of points in the Grid that have the given value.
 func (g *ArraysGrid) Count(b byte) int {
 	size := g.Size()
 	var count int
@@ -88,6 +106,7 @@ func (g *ArraysGrid) Count(b byte) int {
 	return count
 }
 
+// Clone returns a copy of the Grid, leaving the original untouched.
 func (g *ArraysGrid) Clone() Grid {
 	size := g.Size()
 	clone := make(ArraysGrid, size.y)
@@ -98,6 +117,7 @@ func (g *ArraysGrid) Clone() Grid {
 	return &clone
 }
 
+// AllPoints returns a channel of all the points in the Grid.
 func (g *ArraysGrid) AllPoints() <-chan Point {
 	ch := make(chan Point)
 	go func() {
@@ -112,6 +132,8 @@ func (g *ArraysGrid) AllPoints() <-chan Point {
 	return ch
 }
 
+// ReadArraysGrid parses the lines and created a Grid with the y-dimension given by the number of lines
+// and the x-dimension given by the length of the first line.
 func ReadArraysGrid(r io.Reader) *ArraysGrid {
 	var grid ArraysGrid
 	input := bufio.NewScanner(r)
