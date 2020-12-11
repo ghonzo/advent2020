@@ -2,11 +2,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"reflect"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 // Day 11: Seating System
@@ -21,75 +21,9 @@ func main() {
 		panic(err)
 	}
 	defer input.Close()
-	seatMap := readSeatMap(input)
+	seatMap := common.ReadArraysGrid(input)
 	fmt.Printf("Part 1. Answer = %d\n", part1(seatMap))
 	fmt.Printf("Part 2. Answer = %d\n", part2(seatMap))
-}
-
-type seatMap [][]byte
-
-func readSeatMap(r io.Reader) seatMap {
-	var sm seatMap
-	input := bufio.NewScanner(r)
-	for input.Scan() {
-		sm = append(sm, []byte(input.Text()))
-	}
-	return sm
-}
-
-func (sm seatMap) sizeY() int {
-	return len(sm)
-}
-
-func (sm seatMap) sizeX() int {
-	return len(sm[0])
-}
-
-// if second argument (ok) = true, then in bounds
-func (sm seatMap) get(x, y int) (byte, bool) {
-	if x < 0 || x >= sm.sizeX() || y < 0 || y >= sm.sizeY() {
-		return floor, false
-	}
-	return sm[y][x], true
-}
-
-func (sm seatMap) set(x, y int, b byte) {
-	sm[y][x] = b
-}
-
-func (sm seatMap) countOccupied() int {
-	var count int
-	for y := 0; y < sm.sizeY(); y++ {
-		for x := 0; x < sm.sizeX(); x++ {
-			if v, _ := sm.get(x, y); v == occupied {
-				count++
-			}
-		}
-	}
-	return count
-}
-
-func part1(sm seatMap) int {
-	for i := 0; ; i++ {
-		//fmt.Println("Cycle ", i, " occupied ", sm.countOccupied())
-		newSm := sm.cycle()
-		// cheap shot
-		if reflect.DeepEqual(sm, newSm) {
-			return sm.countOccupied()
-		}
-		sm = newSm
-	}
-}
-
-func part2(sm seatMap) int {
-	for i := 0; ; i++ {
-		//fmt.Println("Cycle ", i, " occupied ", sm.countOccupied())
-		newSm := sm.cycle2()
-		if reflect.DeepEqual(sm, newSm) {
-			return sm.countOccupied()
-		}
-		sm = newSm
-	}
 }
 
 const (
@@ -98,93 +32,101 @@ const (
 	floor    = '.'
 )
 
-func (sm seatMap) cycle() seatMap {
-	retVal := make(seatMap, sm.sizeY())
-	for y := 0; y < sm.sizeY(); y++ {
-		retVal[y] = make([]byte, sm.sizeX())
-		for x := 0; x < sm.sizeX(); x++ {
-			retVal.set(x, y, sm.applyRule(x, y))
+func part1(seatMap common.Grid) int {
+	for i := 0; ; i++ {
+		newSeatMap := seatMap.Clone()
+		for pt := range seatMap.AllPoints() {
+			newSeatMap.Set(pt, applyPart1Rule(seatMap, pt))
 		}
+		// let's use DeepEqual ... until we can't
+		if reflect.DeepEqual(seatMap, newSeatMap) {
+			return seatMap.Count(occupied)
+		}
+		seatMap = newSeatMap
 	}
-	return retVal
 }
 
-func (sm seatMap) cycle2() seatMap {
-	retVal := make(seatMap, sm.sizeY())
-	for y := 0; y < sm.sizeY(); y++ {
-		retVal[y] = make([]byte, sm.sizeX())
-		for x := 0; x < sm.sizeX(); x++ {
-			retVal.set(x, y, sm.applyRule2(x, y))
-		}
-	}
-	return retVal
-}
-
-func (sm seatMap) occupiedAround(x, y int) int {
-	var o int
-	for i := x - 1; i <= x+1; i++ {
-		for j := y - 1; j <= y+1; j++ {
-			if i == x && j == y {
-				continue
+func applyPart1Rule(seatMap common.Grid, pt common.Point) byte {
+	current := seatMap.Get(pt)
+	if current != floor {
+		switch n := countSurroundingOccupied(seatMap, pt); current {
+		case occupied:
+			if n >= 4 {
+				return empty
 			}
-			if v, _ := sm.get(i, j); v == occupied {
-				o++
+		case empty:
+			if n == 0 {
+				return occupied
 			}
 		}
 	}
-	return o
+	// No change
+	return current
 }
 
-func (sm seatMap) occupiedAround2(x, y int) int {
-	var o int
-	o += sm.look(x, y, -1, -1)
-	o += sm.look(x, y, 0, -1)
-	o += sm.look(x, y, 1, -1)
-	o += sm.look(x, y, -1, 0)
-	o += sm.look(x, y, 1, 0)
-	o += sm.look(x, y, -1, 1)
-	o += sm.look(x, y, 0, 1)
-	o += sm.look(x, y, 1, 1)
-	return o
+func countSurroundingOccupied(seatMap common.Grid, center common.Point) int {
+	var count int
+	for _, offset := range common.AllDirections {
+		if v, _ := seatMap.CheckedGet(center.Add(offset)); v == occupied {
+			count++
+		}
+	}
+	return count
 }
 
-// return 1 if occupied, 0 else
-func (sm seatMap) look(x, y, dx, dy int) int {
+func part2(seatMap common.Grid) int {
+	for i := 0; ; i++ {
+		newSeatMap := seatMap.Clone()
+		for pt := range seatMap.AllPoints() {
+			newSeatMap.Set(pt, applyPart2Rule(seatMap, pt))
+		}
+		// let's use DeepEqual ... until we can't
+		if reflect.DeepEqual(seatMap, newSeatMap) {
+			return seatMap.Count(occupied)
+		}
+		seatMap = newSeatMap
+	}
+}
+
+func applyPart2Rule(seatMap common.Grid, pt common.Point) byte {
+	current := seatMap.Get(pt)
+	if current != floor {
+		switch n := countRadialOccupied(seatMap, pt); current {
+		case occupied:
+			if n >= 5 {
+				return empty
+			}
+		case empty:
+			if n == 0 {
+				return occupied
+			}
+		}
+	}
+	// No change
+	return current
+}
+
+func countRadialOccupied(seatMap common.Grid, center common.Point) int {
+	var count int
+	for _, direction := range common.AllDirections {
+		if seeOccupied(seatMap, center, direction) {
+			count++
+		}
+	}
+	return count
+}
+
+func seeOccupied(seatMap common.Grid, pt common.Point, direction common.Point) bool {
 	for {
-		x += dx
-		y += dy
-		if v, ok := sm.get(x, y); !ok {
+		pt = pt.Add(direction)
+		if v, ok := seatMap.CheckedGet(pt); !ok {
 			// walked off the edge
-			return 0
+			return false
 		} else if v == occupied {
-			return 1
+			return true
 		} else if v == empty {
-			return 0
+			return false
 		}
-		// must be floor ... keep going
+		// must be floor ... keep looking
 	}
-}
-
-func (sm seatMap) applyRule(x, y int) byte {
-	current, _ := sm.get(x, y)
-	o := sm.occupiedAround(x, y)
-	if current == empty && o == 0 {
-		return occupied
-	}
-	if current == occupied && o >= 4 {
-		return empty
-	}
-	return current
-}
-
-func (sm seatMap) applyRule2(x, y int) byte {
-	current, _ := sm.get(x, y)
-	o := sm.occupiedAround2(x, y)
-	if current == empty && o == 0 {
-		return occupied
-	}
-	if current == occupied && o >= 5 {
-		return empty
-	}
-	return current
 }

@@ -4,18 +4,20 @@ package main
 import (
 	"strings"
 	"testing"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 func Test_part1(t *testing.T) {
 	type args struct {
-		sm seatMap
+		seatMap common.Grid
 	}
 	tests := []struct {
 		name string
 		args args
 		want int
 	}{
-		{"example", args{readSeatMap(strings.NewReader(`L.LL.LL.LL
+		{"example", args{common.ReadArraysGrid(strings.NewReader(`L.LL.LL.LL
 LLLLLLL.LL
 L.L.L..L..
 LLLL.LL.LL
@@ -28,7 +30,7 @@ L.LLLLL.LL`))}, 37},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := part1(tt.args.sm); got != tt.want {
+			if got := part1(tt.args.seatMap); got != tt.want {
 				t.Errorf("part1() = %v, want %v", got, tt.want)
 			}
 		})
@@ -37,14 +39,14 @@ L.LLLLL.LL`))}, 37},
 
 func Test_part2(t *testing.T) {
 	type args struct {
-		sm seatMap
+		seatMap common.Grid
 	}
 	tests := []struct {
 		name string
 		args args
 		want int
 	}{
-		{"example", args{readSeatMap(strings.NewReader(`L.LL.LL.LL
+		{"example", args{common.ReadArraysGrid(strings.NewReader(`L.LL.LL.LL
 LLLLLLL.LL
 L.L.L..L..
 LLLL.LL.LL
@@ -57,7 +59,7 @@ L.LLLLL.LL`))}, 26},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := part2(tt.args.sm); got != tt.want {
+			if got := part2(tt.args.seatMap); got != tt.want {
 				t.Errorf("part2() = %v, want %v", got, tt.want)
 			}
 		})
