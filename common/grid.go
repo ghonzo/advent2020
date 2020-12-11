@@ -94,13 +94,10 @@ func (g *ArraysGrid) Set(coord Point, b byte) {
 
 // Count the number of points in the Grid that have the given value.
 func (g *ArraysGrid) Count(b byte) int {
-	size := g.Size()
 	var count int
-	for y := 0; y < size.y; y++ {
-		for x := 0; x < size.x; x++ {
-			if (*g)[y][x] == b {
-				count++
-			}
+	for pt := range g.AllPoints() {
+		if g.Get(pt) == b {
+			count++
 		}
 	}
 	return count
@@ -138,7 +135,7 @@ func ReadArraysGrid(r io.Reader) *ArraysGrid {
 	var grid ArraysGrid
 	input := bufio.NewScanner(r)
 	for input.Scan() {
-		grid = append(grid, []byte(input.Text()))
+		grid = append(grid, input.Bytes())
 	}
 	return &grid
 }
