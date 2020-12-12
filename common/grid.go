@@ -14,6 +14,10 @@ type Point struct {
 	x, y int
 }
 
+func NewPoint(x, y int) Point {
+	return Point{x, y}
+}
+
 // X returns the x-coordinate
 func (p Point) X() int {
 	return p.x
@@ -29,6 +33,50 @@ func (p Point) Add(q Point) Point {
 	return Point{p.x + q.x, p.y + q.y}
 }
 
+func (p Point) Sub(q Point) Point {
+	return Point{p.x - q.x, p.y - q.y}
+}
+
+func (p Point) Times(m int) Point {
+	return Point{p.x * m, p.y * m}
+}
+
+func (p Point) Left() Point {
+	return Point{p.y, -p.x}
+}
+
+func (p Point) LeftAround(p2 Point) Point {
+	return p.Sub(p2).Left().Add(p2)
+}
+
+func (p Point) Right() Point {
+	return Point{-p.y, p.x}
+}
+
+func (p Point) RightAround(p2 Point) Point {
+	return p.Sub(p2).Right().Add(p2)
+}
+
+func (p Point) Reflect() Point {
+	return Point{-p.x, -p.y}
+}
+
+func (p Point) ReflectAround(p2 Point) Point {
+	return p.Sub(p2).Reflect().Add(p2)
+}
+
+func (p Point) ManhattanDistance() int {
+	x := p.x
+	if x < 0 {
+		x = -x
+	}
+	y := p.y
+	if y < 0 {
+		y = -y
+	}
+	return x + y
+}
+
 // All of these directions (Up Down Left Right) assume "UP" and "LEFT" mean -1 while "DOWN" and "RIGHT" mean +1
 var (
 	UL = Point{-1, -1}
@@ -40,6 +88,18 @@ var (
 	DL = Point{-1, 1}
 	D  = Point{0, 1}
 	DR = Point{1, 1}
+)
+
+// Can use compass directions instead
+var (
+	NW = UL
+	N  = U
+	NE = UR
+	W  = L
+	E  = R
+	SW = DL
+	S  = D
+	SE = DR
 )
 
 // AllDirections is a slice of all the different offsets that repesent the different
