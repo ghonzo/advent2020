@@ -68,7 +68,7 @@ func part1(ins []instruction) int {
 			} else if i.value == 270 {
 				dir = dir.Right()
 			} else {
-				panic("Bad value")
+				panic(fmt.Sprintf("Unexpected instruction: %v", i))
 			}
 		case 'R':
 			if i.value == 90 {
@@ -78,10 +78,12 @@ func part1(ins []instruction) int {
 			} else if i.value == 270 {
 				dir = dir.Left()
 			} else {
-				panic("Bad value")
+				panic(fmt.Sprintf("Unexpected instruction: %v", i))
 			}
 		case 'F':
 			ship = ship.Add(dir.Times(i.value))
+		default:
+			panic(fmt.Sprintf("Unexpected instruction: %v", i))
 		}
 	}
 	return ship.ManhattanDistance()
@@ -108,7 +110,7 @@ func part2(ins []instruction) int {
 			} else if i.value == 270 {
 				waypoint = waypoint.RightAround(ship)
 			} else {
-				panic("Bad value")
+				panic(fmt.Sprintf("Unexpected instruction: %v", i))
 			}
 		case 'R':
 			if i.value == 90 {
@@ -118,12 +120,14 @@ func part2(ins []instruction) int {
 			} else if i.value == 270 {
 				waypoint = waypoint.LeftAround(ship)
 			} else {
-				panic("Bad value")
+				panic(fmt.Sprintf("Unexpected instruction: %v", i))
 			}
 		case 'F':
 			move := waypoint.Sub(ship).Times(i.value)
 			ship = ship.Add(move)
 			waypoint = waypoint.Add(move)
+		default:
+			panic(fmt.Sprintf("Unexpected instruction: %v", i))
 		}
 	}
 	return ship.ManhattanDistance()

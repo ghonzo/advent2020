@@ -14,6 +14,7 @@ type Point struct {
 	x, y int
 }
 
+// NewPoint is the how we create a new Point. Can't use literal Point{X,Y} syntax outside this package.
 func NewPoint(x, y int) Point {
 	return Point{x, y}
 }
@@ -33,48 +34,49 @@ func (p Point) Add(q Point) Point {
 	return Point{p.x + q.x, p.y + q.y}
 }
 
+// Sub returns a new point with (p.x-q.x, p.y-q.y)
 func (p Point) Sub(q Point) Point {
 	return Point{p.x - q.x, p.y - q.y}
 }
 
+// Times scales each coordinate by m
 func (p Point) Times(m int) Point {
 	return Point{p.x * m, p.y * m}
 }
 
+// Left returns a new point that is rotated 90 degress counter-clockwise around the origin
 func (p Point) Left() Point {
 	return Point{p.y, -p.x}
 }
 
+// LeftAround returns a new point that is rotated 90 degress counter-clockwise around the given point
 func (p Point) LeftAround(p2 Point) Point {
 	return p.Sub(p2).Left().Add(p2)
 }
 
+// Right returns a new point that is rotated 90 degress clockwise around the origin
 func (p Point) Right() Point {
 	return Point{-p.y, p.x}
 }
 
+// RightAround returns a new point that is rotated 90 degress clockwise around the given point
 func (p Point) RightAround(p2 Point) Point {
 	return p.Sub(p2).Right().Add(p2)
 }
 
+// Reflect returns a new point that is reflected through the origin
 func (p Point) Reflect() Point {
 	return Point{-p.x, -p.y}
 }
 
+// ReflectAround returns a new pont that is reflected through the given point
 func (p Point) ReflectAround(p2 Point) Point {
 	return p.Sub(p2).Reflect().Add(p2)
 }
 
+// ManhattanDistance returns the sum of the distance of the x- and y-coordinates from the origin
 func (p Point) ManhattanDistance() int {
-	x := p.x
-	if x < 0 {
-		x = -x
-	}
-	y := p.y
-	if y < 0 {
-		y = -y
-	}
-	return x + y
+	return Abs(p.x) + Abs(p.y)
 }
 
 // All of these directions (Up Down Left Right) assume "UP" and "LEFT" mean -1 while "DOWN" and "RIGHT" mean +1
@@ -90,7 +92,7 @@ var (
 	DR = Point{1, 1}
 )
 
-// Can use compass directions instead
+// Can use compass directions as aliases to the above directions if you prefer
 var (
 	NW = UL
 	N  = U
@@ -198,4 +200,12 @@ func ReadArraysGrid(r io.Reader) *ArraysGrid {
 		grid = append(grid, input.Bytes())
 	}
 	return &grid
+}
+
+// Abs returns the absolute value
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
