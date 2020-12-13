@@ -12,7 +12,7 @@ import (
 
 // Day 13: Shuttle Search
 // Part 1 answer: 259
-// Part 2 answer:
+// Part 2 answer: 210612924879242
 func main() {
 	fmt.Println("Advent of Code 2020, Day 13")
 	const filename = "input.txt"
