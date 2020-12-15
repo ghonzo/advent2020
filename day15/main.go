@@ -15,6 +15,8 @@ func main() {
 	fmt.Printf("Part 2. Answer = %d\n", part2(input))
 }
 
+// I could have ditched this and just used the algo for part2, but I kept
+// this here for posterity
 func part1(input []int) int {
 	spoken := input
 	for turn := len(input); turn < 2020; turn++ {
