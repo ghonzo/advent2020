@@ -9,8 +9,8 @@ import (
 )
 
 // Day 17: Conway Cubes
-// Part 1 answer:
-// Part 2 answer:
+// Part 1 answer: 362
+// Part 2 answer: 1980
 func main() {
 	fmt.Println("Advent of Code 2020, Day 17")
 	const filename = "input.txt"
@@ -22,21 +22,14 @@ func main() {
 	defer input.Close()
 	initialState := readState(input)
 	fmt.Printf("Part 1. Answer = %d\n", part1(initialState))
-	//fmt.Printf("Part 2. Answer = %d\n", part2(rules, yourTicket, nearbyTickets))
-}
-
-type point3d struct {
-	x, y, z int
+	fmt.Printf("Part 2. Answer = %d\n", part2(initialState))
 }
 
 type point4d struct {
-	point3d
-	w int
+	x, y, z, w int
 }
 
-type state map[point3d]bool
-
-type state4d map[point4d]bool
+type state map[point4d]bool
 
 func readState(r io.Reader) state {
 	s := make(state)
@@ -45,7 +38,7 @@ func readState(r io.Reader) state {
 	for input.Scan() {
 		for x, c := range input.Bytes() {
 			if c == '#' {
-				s[point3d{x, y, 0}] = true
+				s[point4d{x, y, 0, 0}] = true
 			}
 		}
 		y++
@@ -55,17 +48,24 @@ func readState(r io.Reader) state {
 
 func part1(s state) int {
 	for i := 0; i < 6; i++ {
-		s = cycle(s)
+		s = cycle(s, false)
 	}
 	return len(s)
 }
 
-func cycle(s state) state {
+func part2(s state) int {
+	for i := 0; i < 6; i++ {
+		s = cycle(s, true)
+	}
+	return len(s)
+}
+
+func cycle(s state, use4d bool) state {
 	newState := make(state)
-	searchSpace := findSearchSpace(s)
+	searchSpace := findSearchSpace(s, use4d)
 	for k := range searchSpace {
 		v := s[k]
-		n := neighbors(k, s)
+		n := neighbors(k, s, use4d)
 		if (v && (n == 2 || n == 3)) || (!v && n == 3) {
 			newState[k] = true
 		}
@@ -74,25 +74,39 @@ func cycle(s state) state {
 }
 
 // Expand each spot by 1 in every direction
-func findSearchSpace(s state) state {
+func findSearchSpace(s state, use4d bool) state {
 	// Initially we're going to set each thing to true
 	searchSpace := make(state)
 	for k := range s {
 		searchSpace[k] = true
-		for _, p := range allSurroundingPoints(k) {
+		for _, p := range allSurroundingPoints(k, use4d) {
 			searchSpace[p] = true
 		}
 	}
 	return searchSpace
 }
 
-func allSurroundingPoints(p point3d) []point3d {
-	var surrounding []point3d
-	for x := p.x - 1; x <= p.x+1; x++ {
-		for y := p.y - 1; y <= p.y+1; y++ {
-			for z := p.z - 1; z <= p.z+1; z++ {
-				if !(x == p.x && y == p.y && z == p.z) {
-					surrounding = append(surrounding, point3d{x, y, z})
+func allSurroundingPoints(p point4d, use4d bool) []point4d {
+	var surrounding []point4d
+	if use4d {
+		for x := p.x - 1; x <= p.x+1; x++ {
+			for y := p.y - 1; y <= p.y+1; y++ {
+				for z := p.z - 1; z <= p.z+1; z++ {
+					for w := p.w - 1; w <= p.w+1; w++ {
+						if !(x == p.x && y == p.y && z == p.z && w == p.w) {
+							surrounding = append(surrounding, point4d{x, y, z, w})
+						}
+					}
+				}
+			}
+		}
+	} else {
+		for x := p.x - 1; x <= p.x+1; x++ {
+			for y := p.y - 1; y <= p.y+1; y++ {
+				for z := p.z - 1; z <= p.z+1; z++ {
+					if !(x == p.x && y == p.y && z == p.z) {
+						surrounding = append(surrounding, point4d{x, y, z, 0})
+					}
 				}
 			}
 		}
@@ -100,9 +114,9 @@ func allSurroundingPoints(p point3d) []point3d {
 	return surrounding
 }
 
-func neighbors(p point3d, s state) int {
+func neighbors(p point4d, s state, use4d bool) int {
 	var n int
-	for _, neighbor := range allSurroundingPoints(p) {
+	for _, neighbor := range allSurroundingPoints(p, use4d) {
 		if s[neighbor] {
 			n++
 		}
