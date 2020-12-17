@@ -48,64 +48,71 @@ func readState(r io.Reader) state {
 
 func part1(s state) int {
 	for i := 0; i < 6; i++ {
-		s = cycle(s, false)
+		s = cycle(s, allSurroundingPoints3d)
 	}
 	return len(s)
 }
 
 func part2(s state) int {
 	for i := 0; i < 6; i++ {
-		s = cycle(s, true)
+		s = cycle(s, allSurroundingPoints4d)
 	}
 	return len(s)
 }
 
-func cycle(s state, use4d bool) state {
+type surroundingPointsFunc func(point4d) []point4d
+
+func cycle(s state, f surroundingPointsFunc) state {
 	newState := make(state)
-	searchSpace := findSearchSpace(s, use4d)
-	for k := range searchSpace {
-		v := s[k]
-		n := neighbors(k, s, use4d)
-		if (v && (n == 2 || n == 3)) || (!v && n == 3) {
-			newState[k] = true
+	searchSpace := findSearchSpace(s, f)
+	// Iterate over all of the points in the search space
+	for p := range searchSpace {
+		active := s[p]
+		n := neighbors(p, s, f)
+		if (active && (n == 2 || n == 3)) || (!active && n == 3) {
+			newState[p] = true
 		}
 	}
 	return newState
 }
 
-// Expand each spot by 1 in every direction
-func findSearchSpace(s state, use4d bool) state {
-	// Initially we're going to set each thing to true
+func findSearchSpace(s state, f surroundingPointsFunc) state {
+	// We are going to return a state with every new point that needs to be checked
 	searchSpace := make(state)
-	for k := range s {
-		searchSpace[k] = true
-		for _, p := range allSurroundingPoints(k, use4d) {
-			searchSpace[p] = true
+	// Iterate over all the existing active points
+	for p := range s {
+		searchSpace[p] = true
+		// And also expand to all surrounding points
+		for _, surroundingPoint := range f(p) {
+			searchSpace[surroundingPoint] = true
 		}
 	}
 	return searchSpace
 }
 
-func allSurroundingPoints(p point4d, use4d bool) []point4d {
+// Don't delve into the w dimension
+func allSurroundingPoints3d(p point4d) []point4d {
 	var surrounding []point4d
-	if use4d {
-		for x := p.x - 1; x <= p.x+1; x++ {
-			for y := p.y - 1; y <= p.y+1; y++ {
-				for z := p.z - 1; z <= p.z+1; z++ {
-					for w := p.w - 1; w <= p.w+1; w++ {
-						if !(x == p.x && y == p.y && z == p.z && w == p.w) {
-							surrounding = append(surrounding, point4d{x, y, z, w})
-						}
-					}
+	for x := p.x - 1; x <= p.x+1; x++ {
+		for y := p.y - 1; y <= p.y+1; y++ {
+			for z := p.z - 1; z <= p.z+1; z++ {
+				if !(x == p.x && y == p.y && z == p.z) {
+					surrounding = append(surrounding, point4d{x, y, z, 0})
 				}
 			}
 		}
-	} else {
-		for x := p.x - 1; x <= p.x+1; x++ {
-			for y := p.y - 1; y <= p.y+1; y++ {
-				for z := p.z - 1; z <= p.z+1; z++ {
-					if !(x == p.x && y == p.y && z == p.z) {
-						surrounding = append(surrounding, point4d{x, y, z, 0})
+	}
+	return surrounding
+}
+
+func allSurroundingPoints4d(p point4d) []point4d {
+	var surrounding []point4d
+	for x := p.x - 1; x <= p.x+1; x++ {
+		for y := p.y - 1; y <= p.y+1; y++ {
+			for z := p.z - 1; z <= p.z+1; z++ {
+				for w := p.w - 1; w <= p.w+1; w++ {
+					if !(x == p.x && y == p.y && z == p.z && w == p.w) {
+						surrounding = append(surrounding, point4d{x, y, z, w})
 					}
 				}
 			}
@@ -114,9 +121,9 @@ func allSurroundingPoints(p point4d, use4d bool) []point4d {
 	return surrounding
 }
 
-func neighbors(p point4d, s state, use4d bool) int {
+func neighbors(p point4d, s state, f surroundingPointsFunc) int {
 	var n int
-	for _, neighbor := range allSurroundingPoints(p, use4d) {
+	for _, neighbor := range f(p) {
 		if s[neighbor] {
 			n++
 		}
