@@ -10,7 +10,7 @@ import (
 
 // Day 18: Operation Order
 // Part 1 answer: 29839238838303
-// Part 2 answer:
+// Part 2 answer: 201376568795521
 func main() {
 	fmt.Println("Advent of Code 2020, Day 18")
 	const filename = "input.txt"
@@ -45,7 +45,7 @@ func part1(lines []string) int {
 func part2(lines []string) int {
 	var sum int
 	for _, s := range lines {
-		sum += evalLine(insertParens(s))
+		sum += evalLinePart2(s)
 	}
 	return sum
 }
@@ -55,6 +55,11 @@ func evalLine(s string) int {
 	return eval(s, &pos)
 }
 
+func evalLinePart2(s string) int {
+	return evalLine(insertParens(s))
+}
+
+// We evaluate from left to right, always increasing pos
 func eval(s string, pos *int) int {
 	sol := 0
 	op := byte('+')
@@ -97,8 +102,8 @@ func insertParens(s string) string {
 
 // Given a string and the index of a '+', return a string that inserts parens around the two operands
 func parensAround(s string, plusIndex int) string {
-	// go backwards
 	var parenDepth, openParen, closeParen int
+	// go backwards from the "+" to find where we should put the open paren
 	for openParen = plusIndex - 2; openParen > 0; openParen-- {
 		switch s[openParen] {
 		case ')':
@@ -110,6 +115,7 @@ func parensAround(s string, plusIndex int) string {
 			break
 		}
 	}
+	// go forwards from the "+" to find where we should put the close paren
 	for closeParen = plusIndex + 2; closeParen < len(s); closeParen++ {
 		switch s[closeParen] {
 		case ')':
