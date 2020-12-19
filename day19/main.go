@@ -12,8 +12,8 @@ import (
 )
 
 // Day 19: Monster Messages
-// Part 1 answer:
-// Part 2 answer:
+// Part 1 answer: 265
+// Part 2 answer: 394
 func main() {
 	fmt.Println("Advent of Code 2020, Day 19")
 	const filename = "input.txt"
@@ -26,14 +26,12 @@ func main() {
 	compiledRules, messages := readInput(input)
 	fmt.Printf("Part 1. Answer = %d\n", part1(compiledRules, messages))
 	fmt.Printf("Part 2. Answer = %d\n", part2(compiledRules, messages))
-	//fmt.Printf("Rule 8 = %s\n", compiledRules[8])
-	//fmt.Printf("Rule 11 = %s\n", compiledRules[11])
-	//fmt.Printf("Rule 42 = %s\n", compiledRules[42])
-	//fmt.Printf("Rule 31 = %s\n", compiledRules[31])
 }
 
+// this is the raw rule, as read from the input
 type rule string
 
+// this is a fully realized regex pattern suitable for passing to regexp.Compile()
 type compiledRule string
 
 func readInput(r io.Reader) (map[int]compiledRule, []string) {
@@ -52,14 +50,18 @@ func readInput(r io.Reader) (map[int]compiledRule, []string) {
 		}
 		rules[index] = rule(subs[1][1:])
 	}
-	compiledRules := make(map[int]compiledRule)
-	for k := range rules {
-		compiledRules[k] = getCompiledRule(k, rules, compiledRules)
-	}
 	for input.Scan() {
 		messages = append(messages, input.Text())
 	}
-	return compiledRules, messages
+	return compile(rules), messages
+}
+
+func compile(rules map[int]rule) map[int]compiledRule {
+	compiledRules := make(map[int]compiledRule)
+	for ruleNum := range rules {
+		compiledRules[ruleNum] = getCompiledRule(ruleNum, rules, compiledRules)
+	}
+	return compiledRules
 }
 
 func getCompiledRule(index int, rules map[int]rule, compiledRules map[int]compiledRule) compiledRule {
@@ -82,6 +84,7 @@ func compileRule(index int, rules map[int]rule, compiledRules map[int]compiledRu
 	var addEndParen bool
 	for _, s := range strings.Split(string(rule), " ") {
 		if s == "|" {
+			// make a non-capturing group
 			cr = compiledRule("(?:" + string(cr) + s)
 			addEndParen = true
 		} else {
@@ -89,11 +92,11 @@ func compileRule(index int, rules map[int]rule, compiledRules map[int]compiledRu
 			if err != nil {
 				panic(err)
 			}
-			cr = cr + getCompiledRule(subIndex, rules, compiledRules)
+			cr += getCompiledRule(subIndex, rules, compiledRules)
 		}
 	}
 	if addEndParen {
-		cr = cr + ")"
+		cr += ")"
 	}
 	return cr
 }
@@ -109,18 +112,20 @@ func part1(compiledRules map[int]compiledRule, messages []string) int {
 }
 
 func (cr compiledRule) matches(message string) bool {
+	// This is really inefficient that we don't cache the regexp. Oh well.
 	return regexp.MustCompile("^" + string(cr) + "$").MatchString(message)
 }
 
 func part2(compiledRules map[int]compiledRule, messages []string) int {
 	mm := make(map[string]bool)
 	compiledRules[8] = compiledRules[42] + "+"
+	// i represents the number of times we should match rule 42 and rule 31. Keep increasing until we don't match anymore.
 	for i, matchedAtLeastOne := 1, true; matchedAtLeastOne; i++ {
 		fmt.Println(i)
 		matchedAtLeastOne = false
-		repeatStr := fmt.Sprintf("{%d}", i)
+		repeatStr := compiledRule(fmt.Sprintf("{%d}", i))
 		// Need to tweak rule0
-		cr0 := compiledRule(string(compiledRules[8]) + string(compiledRules[42]) + repeatStr + string(compiledRules[31]) + repeatStr)
+		var cr0 compiledRule = compiledRules[8] + compiledRules[42] + repeatStr + compiledRules[31] + repeatStr
 		for _, s := range messages {
 			if _, ok := mm[s]; ok {
 				continue
