@@ -12,7 +12,7 @@ import (
 
 // Day 20: Jurassic Jigsaw
 // Part 1 answer: 64802175715999
-// Part 2 answer:
+// Part 2 answer: n/a
 func main() {
 	fmt.Println("Advent of Code 2020, Day 20")
 	const filename = "input.txt"
