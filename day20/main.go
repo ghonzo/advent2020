@@ -24,7 +24,6 @@ func main() {
 	defer input.Close()
 	tiles := readTiles(input)
 	fmt.Printf("Part 1. Answer = %d\n", part1(tiles))
-	//fmt.Printf("Part 2. Answer = %d\n", part2(compiledRules, messages))
 }
 
 type tile struct {
