@@ -63,6 +63,15 @@ func flipHorizontal(i, j int) (int, int) {
 	return i, n - j - 1
 }
 
+// Composites
+func r90FlipVertical(i, j int) (int, int) {
+	return flipVertical(r90(i, j))
+}
+
+func r90FlipHorizontal(i, j int) (int, int) {
+	return flipHorizontal(r90(i, j))
+}
+
 type direction int
 
 const (
@@ -78,26 +87,23 @@ func (d direction) opposite() direction {
 	return direction((d + 2) % 4)
 }
 
-// Collect all the rotations, strategically indexed by direction
-var rotations = [4]transform{r0, r90, r180, r270}
+// Collect all the transforms. The first four are significant because indexed by direction
+var allTransforms = [8]transform{r0, r90, r180, r270, flipVertical, flipHorizontal, r90FlipVertical, r90FlipHorizontal}
 
 type tile struct {
 	id   int // for debugging only
 	data [][]byte
 	// indexed by direction
 	adjacent [4]*tile
-	// These all need to be initialized to "identity"
-	rotation, flipV, flipH                   transform
-	rotationLocked, flipVLocked, flipHLocked bool
+	xform    transform
+	locked   bool
 }
 
 var nullTile = new(tile)
 
 func newTile() *tile {
 	var t tile
-	t.rotation = identity
-	t.flipV = identity
-	t.flipH = identity
+	t.xform = identity
 	return &t
 }
 
@@ -129,10 +135,20 @@ func readTiles(r io.Reader) map[int]*tile {
 // This will not only return the product of the corners, but will
 // leave all the tiles appropriately rotated, flipped, and connected
 func part1(tiles map[int]*tile) int {
-	// Let's iterate over all the tiles
+	//var tilesToSearch = []*tile{tiles[3079]}
+	var tilesToSearch []*tile
+	// Pick a tile, any tile
 	for _, t := range tiles {
+		tilesToSearch = []*tile{t}
+	}
 
-		t.findAdjacentTiles(tiles)
+	// Let's iterate over all the tiles to search until they are all found
+	for len(tilesToSearch) > 0 {
+		t := tilesToSearch[0]
+		tilesToSearch = tilesToSearch[1:]
+		if !t.allFound() {
+			tilesToSearch = append(tilesToSearch, t.findAdjacentTiles(tiles)...)
+		}
 	}
 	// Okay, now that they are all placed, find the corners
 	prod := 1
@@ -145,7 +161,20 @@ func part1(tiles map[int]*tile) int {
 	return prod
 }
 
-func (t *tile) findAdjacentTiles(tiles map[int]*tile) {
+func (t *tile) allFound() bool {
+	if t == nullTile {
+		return true
+	}
+	for _, v := range t.adjacent {
+		if v == nil {
+			return false
+		}
+	}
+	return true
+}
+
+func (t *tile) findAdjacentTiles(tiles map[int]*tile) []*tile {
+	t.locked = true
 DirectionSearch:
 	for _, d := range directions {
 		if t.adjacent[d] != nil {
@@ -168,6 +197,7 @@ DirectionSearch:
 		// Not found, so put nullTile in there
 		t.adjacent[d] = nullTile
 	}
+	return t.adjacent[:]
 }
 
 func (t *tile) countAdjacent() int {
@@ -180,16 +210,12 @@ func (t *tile) countAdjacent() int {
 	return count
 }
 
-func (t *tile) applyAllTransforms(i, j int) (int, int) {
-	return t.flipH(t.flipV(t.rotation(i, j)))
-}
-
 // This returns a bitwise representation of the edge
 func (t *tile) calculateEdge(d direction) int {
 	var edge int
 	// Always just calculate the top edge, let the transforms do their work
 	for col := 0; col < n; col++ {
-		i, j := rotations[d](t.applyAllTransforms(col, 0))
+		i, j := t.xform(allTransforms[d](col, 0))
 		if t.data[j][i] == '#' {
 			edge += (1 << col)
 		}
@@ -197,81 +223,33 @@ func (t *tile) calculateEdge(d direction) int {
 	return edge
 }
 
+// This returns a bitwise representation of the edge for matching
+func (t *tile) calculateEdgeReversed(d direction) int {
+	var edge int
+	// Always just calculate the top edge, let the transforms do their work
+	for col := 0; col < n; col++ {
+		i, j := t.xform(allTransforms[d](n-col-1, 0))
+		if t.data[j][i] == '#' {
+			edge += (1 << col)
+		}
+	}
+	return edge
+}
 func (t *tile) findEdge(edge int, d direction) bool {
 	// If rotation is locked in, then let's check that
-	if t.rotationLocked {
-		if t.calculateEdge(d) == edge {
-			// Found it, no additional transforms needed
-			return true
-		}
-		// If we are trting to find north or south, maybe we can FlipV
-		if d == north || d == south {
-			if t.flipVLocked {
-				// Nope, we are locked in
-				return false
-			}
-			// Let's try
-			t.flipV = flipVertical
-			if t.calculateEdge(d) == edge {
-				// We found it. Lock it in
-				t.flipVLocked = true
-				return true
-			}
-			// Nope, that didn't work. Set it back
-			t.flipV = identity
-			return false
-		}
-		// Since we are east or west, let's try flipH
-		if t.flipHLocked {
-			// Nope, we are locked in
-			return false
-		}
-		// Let's try
-		t.flipH = flipHorizontal
-		if t.calculateEdge(d) == edge {
-			// We found it. Lock it in
-			t.flipHLocked = true
-			return true
-		}
-		// Nope, that didn't work. Set it back
-		t.flipH = identity
-		return false
+	if t.locked {
+		return t.calculateEdgeReversed(d) == edge
 	}
-	// We can try all rotations
-	for _, rot := range rotations {
-		t.rotation = rot
-		if t.calculateEdge(d) == edge {
-			// Got it. Lock in the correct parts
-			t.rotationLocked = true
-			if d == north || d == south {
-				t.flipVLocked = true
-			} else {
-				t.flipHLocked = true
-			}
+	// We can try all transforms
+	for _, xf := range allTransforms {
+		t.xform = xf
+		if t.calculateEdgeReversed(d) == edge {
+			// Got it. Lock it in
+			t.locked = true
 			return true
-		}
-		// Also try a flip
-		if d == north || d == south {
-			t.flipV = flipVertical
-			if t.calculateEdge(d) == edge {
-				t.rotationLocked = true
-				t.flipVLocked = true
-				return true
-			}
-			// Nope
-			t.flipV = identity
-		} else {
-			t.flipH = flipHorizontal
-			if t.calculateEdge(d) == edge {
-				t.rotationLocked = true
-				t.flipHLocked = true
-				return true
-			}
-			// Nope
-			t.flipH = identity
 		}
 	}
-	// No dice
-	t.rotation = identity
+	// No dice (not sure if we need to set this back but whatevs)
+	t.xform = identity
 	return false
 }
