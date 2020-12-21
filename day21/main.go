@@ -54,6 +54,7 @@ func (f food) containsAllergen(allergen string) bool {
 
 type ingredientSet map[string]bool
 
+// group 1 is space separated list of ingredients, group 2 is comma separated list of allergens
 var foodRegexp = regexp.MustCompile(`^(.*) \(contains (.*)\)$`)
 
 func readFoods(r io.Reader) []food {
@@ -85,6 +86,7 @@ func part1And2(foods []food) (int, string) {
 		}
 	}
 	s, _ := searchAllergens(foods, allergenToPotentialIngredients, newState())
+	// Count the number of ingredients that cannot contain allergens
 	var count int
 	for _, f := range foods {
 		for _, ingred := range f.ingredients {
@@ -134,17 +136,20 @@ func copyState(other state) state {
 	return s
 }
 
+// If returns true, then we found a state that fits the criteria
 func searchAllergens(foods []food, allergenMap map[string]ingredientSet, s state) (state, bool) {
 	for a, is := range allergenMap {
+		// Allergen is only in one ingredient
 		if _, ok := s.allergenToIngredient[a]; ok {
 			continue
 		}
 		// Okay we haven't assigned this allergen yet
 		for ingred := range is {
+			// Ingredient can only have at most one allergen
 			if _, ok := s.ingredientToAllergen[ingred]; ok {
 				continue
 			}
-			// Do a quick check to see if this is a valid path
+			// Do a quick check to see if this invalidates any foods
 			if !checkFoods(foods, a, ingred) {
 				continue
 			}
