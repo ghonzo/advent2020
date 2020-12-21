@@ -24,14 +24,48 @@ func main() {
 	}
 	defer input.Close()
 	tiles := readTiles(input)
+	fitTilesTogether(tiles)
 	fmt.Printf("Part 1. Answer = %d\n", part1(tiles))
 	fmt.Printf("Part 2. Answer = %d\n", part2(tiles))
 }
 
-type transform func(i, j int) (int, int)
+type tile struct {
+	id       int // only used for debugging
+	data     [][]byte
+	adjacent [4]*tile // indexed by direction
+	xform    transform
+	locked   bool
+}
+
+// nullTile is used to indicate we have walked off the edge
+var nullTile = new(tile)
+
+func newTile() *tile {
+	var t tile
+	t.xform = identity
+	return &t
+}
 
 // size of the tile
 var n = 10
+
+type direction int
+
+const (
+	north direction = iota
+	east
+	south
+	west
+)
+
+var directions = []direction{north, east, south, west}
+
+func (d direction) opposite() direction {
+	return direction((d + 2) % 4)
+}
+
+// Given i,j, return transformed col, row
+type transform func(i, j int) (int, int)
 
 // TRANSFORMS
 
@@ -74,40 +108,8 @@ func r90FlipHorizontal(i, j int) (int, int) {
 	return flipHorizontal(r90(i, j))
 }
 
-type direction int
-
-const (
-	north direction = iota
-	east
-	south
-	west
-)
-
-var directions = []direction{north, east, south, west}
-
-func (d direction) opposite() direction {
-	return direction((d + 2) % 4)
-}
-
 // Collect all the transforms. The first four are significant because indexed by direction
 var allTransforms = [8]transform{r0, r90, r180, r270, flipVertical, flipHorizontal, r90FlipVertical, r90FlipHorizontal}
-
-type tile struct {
-	id   int // for debugging only
-	data [][]byte
-	// indexed by direction
-	adjacent [4]*tile
-	xform    transform
-	locked   bool
-}
-
-var nullTile = new(tile)
-
-func newTile() *tile {
-	var t tile
-	t.xform = identity
-	return &t
-}
 
 var tileRegexp = regexp.MustCompile(`^Tile (\d+):$`)
 
@@ -134,28 +136,31 @@ func readTiles(r io.Reader) map[int]*tile {
 	return tiles
 }
 
-// This will not only return the product of the corners, but will
-// leave all the tiles appropriately rotated, flipped, and connected
-func part1(tiles map[int]*tile) int {
-	//var tilesToSearch = []*tile{tiles[3079]}
+// Returns the same map that is passed in. Helps with testing.
+func fitTilesTogether(tiles map[int]*tile) map[int]*tile {
 	var tilesToSearch []*tile
 	// Pick a tile, any tile
 	for _, t := range tiles {
 		tilesToSearch = []*tile{t}
+		break
 	}
-
 	// Let's iterate over all the tiles to search until they are all found
 	for len(tilesToSearch) > 0 {
+		// Pop first one off the stack
 		t := tilesToSearch[0]
 		tilesToSearch = tilesToSearch[1:]
 		if !t.allFound() {
 			tilesToSearch = append(tilesToSearch, t.findAdjacentTiles(tiles)...)
 		}
 	}
-	// Okay, now that they are all placed, find the corners
+	return tiles
+}
+
+// Assumes we have all the tiles fit together when called
+func part1(tiles map[int]*tile) int {
+	// Okay, now that they are all placed, find the corners (only have 2 adjacent)
 	prod := 1
 	for id, t := range tiles {
-		fmt.Printf("Tile id %d has %d adjacent\n", id, t.countAdjacent())
 		if t.countAdjacent() == 2 {
 			prod *= id
 		}
@@ -217,8 +222,7 @@ func (t *tile) calculateEdge(d direction) int {
 	var edge int
 	// Always just calculate the top edge, let the transforms do their work
 	for col := 0; col < n; col++ {
-		i, j := t.xform(allTransforms[d](col, 0))
-		if t.data[j][i] == '#' {
+		if t.get(allTransforms[d](col, 0)) == '#' {
 			edge += (1 << col)
 		}
 	}
@@ -230,13 +234,14 @@ func (t *tile) calculateEdgeReversed(d direction) int {
 	var edge int
 	// Always just calculate the top edge, let the transforms do their work
 	for col := 0; col < n; col++ {
-		i, j := t.xform(allTransforms[d](n-col-1, 0))
-		if t.data[j][i] == '#' {
+		if t.get(allTransforms[d](n-col-1, 0)) == '#' {
 			edge += (1 << col)
 		}
 	}
 	return edge
 }
+
+// See if this tile has the given edge. tile will rotate and flip as needed to make a match
 func (t *tile) findEdge(edge int, d direction) bool {
 	// If rotation is locked in, then let's check that
 	if t.locked {
@@ -267,6 +272,7 @@ var monster = [3][]byte{
 	[]byte(" #  #  #  #  #  #   "),
 }
 
+// Number of lit pixels the monster covers
 const monsterCovers = 15
 
 func part2(tiles map[int]*tile) int {
@@ -282,6 +288,7 @@ func part2(tiles map[int]*tile) int {
 			}
 			bigTileData = append(bigTileData, row)
 		}
+		// Keep walking east until we fall off
 		for t = t.adjacent[east]; t != nullTile; t = t.adjacent[east] {
 			for j := 1; j < n-1; j++ {
 				for i := 1; i < n-1; i++ {
@@ -295,9 +302,9 @@ func part2(tiles map[int]*tile) int {
 		bigTileDataRow += (n - 2)
 	}
 	// Okay now we have a big huge tile
-	for _, row := range bigTileData {
-		fmt.Println(string(row))
-	}
+	// for _, row := range bigTileData {
+	// 	fmt.Println(string(row))
+	// }
 	// Count all the #
 	var count int
 	for _, row := range bigTileData {
@@ -308,10 +315,10 @@ func part2(tiles map[int]*tile) int {
 	bigTile.data = bigTileData
 	// Oh dear God please forgive this hack
 	n = len(bigTileData)
-	// Okay let's go hunting for monsters
-	var monsters int
+	// Okay let's go hunting for monsters. We will cycle through valid transforms until we detect at least one.
 	for _, xf := range allTransforms {
 		bigTile.xform = xf
+		var monsters int
 		// Now define a moving window to find the monster
 		for j := 0; j <= n-len(monster); j++ {
 			for i := 0; i <= n-len(monster[0]); i++ {
@@ -321,9 +328,9 @@ func part2(tiles map[int]*tile) int {
 			}
 		}
 		if monsters > 0 {
-			fmt.Printf("Found %d monsters for xform %v\n", monsters, xf)
-			return count - monsters*15 // 15 is the number of lit pixels in the monster
+			return count - monsters*monsterCovers
 		}
+		// No monsters found with that transform, try another
 	}
 	panic("No monsters found")
 }
