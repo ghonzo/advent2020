@@ -91,6 +91,7 @@ func part2(arg [2]deck) int {
 	return score(finalDecks)
 }
 
+// Return which deck "wins" and the states of the two decks
 func playGame(decks [2]deck, cards [2]byte) (int, [2]deck) {
 	previousStates := make(map[string]bool)
 	var subDecks [2]deck
@@ -100,12 +101,12 @@ func playGame(decks [2]deck, cards [2]byte) (int, [2]deck) {
 	copy(subDecks[1], decks[1][:cards[1]])
 	var winningSubDeck int
 	for len(subDecks[0]) > 0 && len(subDecks[1]) > 0 {
-		if str := decksState(subDecks); previousStates[str] {
+		state := decksState(subDecks)
+		if previousStates[state] {
 			// Winner by recursion
 			return 0, subDecks
-		} else {
-			previousStates[str] = true
 		}
+		previousStates[state] = true
 		var c [2]byte
 		c[0] = subDecks[0][0]
 		subDecks[0] = subDecks[0][1:]
