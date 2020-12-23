@@ -9,12 +9,12 @@ import (
 
 // Day 23: Crab Cups
 // Part 1 answer: 98645732
-// Part 2 answer:
+// Part 2 answer: 689500518476
 func main() {
 	fmt.Println("Advent of Code 2020, Day 23")
 	input := "364289715"
 	fmt.Printf("Part 1. Answer = %s\n", part1(input))
-	//fmt.Printf("Part 2. Answer = %d\n", part2(decks))
+	fmt.Printf("Part 2. Answer = %d\n", part2(input))
 }
 
 type indexedLinkedList struct {
@@ -65,33 +65,8 @@ func part1(input string) string {
 		ill.addCup(int(ch) - '0')
 	}
 	currentCup := ill.cups.Front()
-	fmt.Println("Initial state ", ill)
 	for move := 0; move < 100; move++ {
-		// Let's take three cups
-		c1 := ill.cupAfter(currentCup)
-		c2 := ill.cupAfter(c1)
-		c3 := ill.cupAfter(c2)
-		// Find destination cup
-		destinationCupLabel := currentCup.Value.(int)
-		var destinationCup *list.Element
-		for {
-			destinationCupLabel--
-			if destinationCupLabel == 0 {
-				destinationCupLabel = ill.size()
-			}
-			destinationCup = ill.findCup(destinationCupLabel)
-			if destinationCup != c1 && destinationCup != c2 && destinationCup != c3 {
-				// found it
-				break
-			}
-		}
-		// Move the removed cups there
-		ill.cups.MoveAfter(c1, destinationCup)
-		ill.cups.MoveAfter(c2, c1)
-		ill.cups.MoveAfter(c3, c2)
-		// Move clockwise
-		currentCup = ill.cupAfter(currentCup)
-		fmt.Printf("After move %d: %v\n", move, ill)
+		currentCup = makeMove(ill, currentCup)
 	}
 	// Now find all the cups after #1
 	var s string
@@ -101,4 +76,51 @@ func part1(input string) string {
 		s += strconv.Itoa(currentCup.Value.(int))
 	}
 	return s
+}
+
+func makeMove(ill *indexedLinkedList, currentCup *list.Element) *list.Element {
+	// Let's take three cups
+	c1 := ill.cupAfter(currentCup)
+	c2 := ill.cupAfter(c1)
+	c3 := ill.cupAfter(c2)
+	// Find destination cup
+	destinationCupLabel := currentCup.Value.(int)
+	var destinationCup *list.Element
+	for {
+		destinationCupLabel--
+		if destinationCupLabel == 0 {
+			destinationCupLabel = ill.size()
+		}
+		destinationCup = ill.findCup(destinationCupLabel)
+		if destinationCup != c1 && destinationCup != c2 && destinationCup != c3 {
+			// found it
+			break
+		}
+	}
+	// Move the removed cups there
+	ill.cups.MoveAfter(c1, destinationCup)
+	ill.cups.MoveAfter(c2, c1)
+	ill.cups.MoveAfter(c3, c2)
+	// Move clockwise
+	return ill.cupAfter(currentCup)
+}
+
+func part2(input string) int {
+	ill := newIndexedLinkedList(1000000)
+	for _, ch := range input {
+		ill.addCup(int(ch) - '0')
+	}
+	// Now add the rest
+	for label := 10; label <= 1000000; label++ {
+		ill.addCup(label)
+	}
+	currentCup := ill.cups.Front()
+	for move := 0; move < 10000000; move++ {
+		currentCup = makeMove(ill, currentCup)
+	}
+	// Now find the two cups after cup 1
+	currentCup = ill.findCup(1)
+	c1 := ill.cupAfter(currentCup)
+	c2 := ill.cupAfter(c1)
+	return c1.Value.(int) * c2.Value.(int)
 }
