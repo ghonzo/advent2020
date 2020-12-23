@@ -2,6 +2,7 @@
 package main
 
 import (
+	"container/list"
 	"fmt"
 	"strconv"
 )
@@ -16,86 +17,88 @@ func main() {
 	//fmt.Printf("Part 2. Answer = %d\n", part2(decks))
 }
 
-type state struct {
-	cups            []int
-	currentCupIndex int
+type indexedLinkedList struct {
+	cups *list.List
+	// The index is cup label-1 points to where it is in the list
+	cupsIndex []*list.Element
 }
 
-// Remove the three cups following currentCup
-func (s *state) removeCups() []int {
-	removed := make([]int, 3)
-	if s.currentCupIndex+3 < len(s.cups) {
-		copy(removed, s.cups[s.currentCupIndex+1:s.currentCupIndex+4])
-		s.cups = append(s.cups[:s.currentCupIndex+1], s.cups[s.currentCupIndex+4:]...)
-		return removed
-	}
-	removedFromFront := (s.currentCupIndex + 4) % len(s.cups)
-	copy(removed, append(s.cups[s.currentCupIndex+1:], s.cups[:removedFromFront]...))
-	s.cups = s.cups[removedFromFront : s.currentCupIndex+1]
-	s.currentCupIndex -= removedFromFront
-	return removed
+func newIndexedLinkedList(size int) *indexedLinkedList {
+	ill := new(indexedLinkedList)
+	ill.cups = list.New()
+	ill.cupsIndex = make([]*list.Element, size, size)
+	return ill
 }
 
-func (s *state) findDesintationCup() int {
-	// What is the current cup value?
-	currentCupValue := s.cups[s.currentCupIndex]
-	for cupToFind := currentCupValue - 1; cupToFind > 0; cupToFind-- {
-		for i, v := range s.cups {
-			if v == cupToFind {
-				return i
-			}
-		}
-	}
-	// Nope, find the highest
-	var highest, highestIndex int
-	for i, v := range s.cups {
-		if v > highest {
-			highest = v
-			highestIndex = i
-		}
-	}
-	return highestIndex
+func (ill *indexedLinkedList) addCup(label int) {
+	el := ill.cups.PushBack(label)
+	ill.cupsIndex[label-1] = el
 }
 
-func (s *state) insertCups(index int, c []int) {
-	s.cups = append(s.cups[:index+1], append(c, s.cups[index+1:]...)...)
-	if s.currentCupIndex > index {
-		s.currentCupIndex += len(c)
-	}
+func (ill *indexedLinkedList) findCup(label int) *list.Element {
+	return ill.cupsIndex[label-1]
 }
 
-func (s *state) selectNewCurrentCup() {
-	s.currentCupIndex = (s.currentCupIndex + 1) % len(s.cups)
+func (ill *indexedLinkedList) cupAfter(cup *list.Element) *list.Element {
+	after := cup.Next()
+	if after == nil {
+		after = ill.cups.Front()
+	}
+	return after
 }
 
-func (s *state) String() string {
-	var str string
-	for i, v := range s.cups {
-		if i == s.currentCupIndex {
-			str += "("
-		}
-		str += strconv.Itoa(v)
-		if i == s.currentCupIndex {
-			str += ")"
-		}
+func (ill *indexedLinkedList) size() int {
+	return len(ill.cupsIndex)
+}
+
+func (ill *indexedLinkedList) String() string {
+	var s string
+	for e := ill.cups.Front(); e != nil; e = e.Next() {
+		s += strconv.Itoa(e.Value.(int))
 	}
-	return str
+	return s
 }
 
 func part1(input string) string {
-	cups := make([]int, 0, len(input))
+	ill := newIndexedLinkedList(len(input))
 	for _, ch := range input {
-		cups = append(cups, int(ch)-'0')
+		ill.addCup(int(ch) - '0')
 	}
-	s := &state{cups, 0}
-	fmt.Println("Initial State ", s)
+	currentCup := ill.cups.Front()
+	fmt.Println("Initial state ", ill)
 	for move := 0; move < 100; move++ {
-		// Let's find the destination cup
-		removedCups := s.removeCups()
-		destinationCupIndex := s.findDesintationCup()
-		s.insertCups(destinationCupIndex, removedCups)
-		s.selectNewCurrentCup()
-		fmt.Println(s)
+		// Let's take three cups
+		c1 := ill.cupAfter(currentCup)
+		c2 := ill.cupAfter(c1)
+		c3 := ill.cupAfter(c2)
+		// Find destination cup
+		destinationCupLabel := currentCup.Value.(int)
+		var destinationCup *list.Element
+		for {
+			destinationCupLabel--
+			if destinationCupLabel == 0 {
+				destinationCupLabel = ill.size()
+			}
+			destinationCup = ill.findCup(destinationCupLabel)
+			if destinationCup != c1 && destinationCup != c2 && destinationCup != c3 {
+				// found it
+				break
+			}
+		}
+		// Move the removed cups there
+		ill.cups.MoveAfter(c1, destinationCup)
+		ill.cups.MoveAfter(c2, c1)
+		ill.cups.MoveAfter(c3, c2)
+		// Move clockwise
+		currentCup = ill.cupAfter(currentCup)
+		fmt.Printf("After move %d: %v\n", move, ill)
 	}
-	return s.String()
+	// Now find all the cups after #1
+	var s string
+	currentCup = ill.findCup(1)
+	for i := 0; i < ill.size()-1; i++ {
+		currentCup = ill.cupAfter(currentCup)
+		s += strconv.Itoa(currentCup.Value.(int))
+	}
+	return s
 }
