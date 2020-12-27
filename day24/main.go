@@ -25,6 +25,7 @@ func main() {
 	fmt.Printf("Part 2. Answer = %d\n", part2(tileList))
 }
 
+// Oh oh oh I remember from a previous AoC that you can use cubic coordinates for a hex grid
 type coord struct {
 	x, y, z int
 }
@@ -56,7 +57,7 @@ func part1(tileList []string) int {
 }
 
 func flipTiles(tileList []string) map[coord]bool {
-	// false is white
+	// false is white, true is black
 	tiles := make(map[coord]bool)
 	for _, line := range tileList {
 		c := coord{}
@@ -124,6 +125,7 @@ func applyRules(tiles map[coord]bool) map[coord]bool {
 			}
 		}
 	}
+	// Now this is the tile map after this iteration. True means "black"
 	newTiles := make(map[coord]bool)
 	for c := range tilesToConsider {
 		var numBlack int
