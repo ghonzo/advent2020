@@ -2,11 +2,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
-	"strconv"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 // Day 1: Report Repair
@@ -14,29 +12,9 @@ import (
 // Part 2 answer: 212481360
 func main() {
 	fmt.Println("Advent of Code 2020, Day 1")
-	const filename = "input.txt"
-	fmt.Printf("Reading file %s\n", filename)
-	input, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer input.Close()
-	entries := readInts(input)
+	entries := common.ReadIntsFromFile("input.txt")
 	fmt.Printf("Part 1: Entries multiplied =  %d\n", part1(entries, 2020))
 	fmt.Printf("Part 2: Entries multiplied =  %d\n", part2(entries, 2020))
-}
-
-func readInts(r io.Reader) []int {
-	var ints []int
-	input := bufio.NewScanner(r)
-	for input.Scan() {
-		i, err := strconv.Atoi(input.Text())
-		if err != nil {
-			fmt.Printf("Bad input: %s\n", input.Text())
-		}
-		ints = append(ints, i)
-	}
-	return ints
 }
 
 func part1(entries []int, sum int) int {
