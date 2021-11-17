@@ -2,11 +2,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
-	"strconv"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 // Day 10: Adapter Array
@@ -14,29 +12,9 @@ import (
 // Part 2 answer: 42313823813632
 func main() {
 	fmt.Println("Advent of Code 2020, Day 10")
-	const filename = "input.txt"
-	fmt.Printf("Reading file %s\n", filename)
-	input, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer input.Close()
-	numbers := readNumbers(input)
+	numbers := common.ReadIntsFromFile("input.txt")
 	fmt.Printf("Part 1. Answer = %d\n", part1(numbers))
 	fmt.Printf("Part 2. Answer = %d\n", part2(numbers))
-}
-
-func readNumbers(r io.Reader) []int {
-	var numbers []int
-	input := bufio.NewScanner(r)
-	for input.Scan() {
-		n, err := strconv.Atoi(input.Text())
-		if err != nil {
-			panic(err)
-		}
-		numbers = append(numbers, n)
-	}
-	return numbers
 }
 
 func part1(numbers []int) int {

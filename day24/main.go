@@ -2,10 +2,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 // Day 24: Lobby Layout
@@ -13,14 +12,7 @@ import (
 // Part 2 answer: 3900
 func main() {
 	fmt.Println("Advent of Code 2020, Day 24")
-	const filename = "input.txt"
-	fmt.Printf("Reading file %s\n", filename)
-	input, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer input.Close()
-	tileList := readTileList(input)
+	tileList := common.ReadStringsFromFile("input.txt")
 	fmt.Printf("Part 1. Answer = %d\n", part1(tileList))
 	fmt.Printf("Part 2. Answer = %d\n", part2(tileList))
 }
@@ -41,15 +33,6 @@ var (
 
 func (c coord) add(other coord) coord {
 	return coord{c.x + other.x, c.y + other.y, c.z + other.z}
-}
-
-func readTileList(r io.Reader) []string {
-	var tileList []string
-	input := bufio.NewScanner(r)
-	for input.Scan() {
-		tileList = append(tileList, input.Text())
-	}
-	return tileList
 }
 
 func part1(tileList []string) int {

@@ -4,6 +4,8 @@ package main
 import (
 	"strings"
 	"testing"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 func Test_geology_hitTreesForSlope(t *testing.T) {
@@ -22,7 +24,7 @@ func Test_geology_hitTreesForSlope(t *testing.T) {
 		{"7,1", args{7, 1}, 4},
 		{"1,2", args{1, 2}, 2},
 	}
-	g := readGeology(strings.NewReader(`..##.......
+	g := geology{common.ReadStrings(strings.NewReader(`..##.......
 #...#...#..
 .#....#..#.
 ..#.#...#.#
@@ -32,7 +34,7 @@ func Test_geology_hitTreesForSlope(t *testing.T) {
 .#........#
 #.##...#...
 #...##....#
-.#..#...#.#`))
+.#..#...#.#`))}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := g.hitTreesForSlope(tt.args.xInc, tt.args.yInc); got != tt.want {

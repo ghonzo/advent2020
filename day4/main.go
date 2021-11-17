@@ -2,13 +2,14 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 // Day 4: Passport Processing
@@ -41,10 +42,8 @@ type passport map[string]string
 
 func readPassports(r io.Reader) []passport {
 	var passports []passport
-	input := bufio.NewScanner(r)
 	p := make(passport)
-	for input.Scan() {
-		line := input.Text()
+	for _, line := range common.ReadStrings(r) {
 		if len(line) == 0 {
 			passports = append(passports, p)
 			p = make(passport)

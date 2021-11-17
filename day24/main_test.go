@@ -4,6 +4,8 @@ package main
 import (
 	"strings"
 	"testing"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 func Test_part1(t *testing.T) {
@@ -15,7 +17,7 @@ func Test_part1(t *testing.T) {
 		args args
 		want int
 	}{
-		{"example", args{readTileList(strings.NewReader(`sesenwnenenewseeswwswswwnenewsewsw
+		{"example", args{common.ReadStrings(strings.NewReader(`sesenwnenenewseeswwswswwnenewsewsw
 neeenesenwnwwswnenewnwwsewnenwseswesw
 seswneswswsenwwnwse
 nwnwneseeswswnenewneswwnewseswneseene
@@ -54,7 +56,7 @@ func Test_part2(t *testing.T) {
 		args args
 		want int
 	}{
-		{"example", args{readTileList(strings.NewReader(`sesenwnenenewseeswwswswwnenewsewsw
+		{"example", args{common.ReadStrings(strings.NewReader(`sesenwnenenewseeswwswswwnenewsewsw
 neeenesenwnwwswnenewnwwsewnenwseswesw
 seswneswswsenwwnwse
 nwnwneseeswswnenewneswwnewseswneseene

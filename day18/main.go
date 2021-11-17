@@ -2,10 +2,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 // Day 18: Operation Order
@@ -13,25 +12,9 @@ import (
 // Part 2 answer: 201376568795521
 func main() {
 	fmt.Println("Advent of Code 2020, Day 18")
-	const filename = "input.txt"
-	fmt.Printf("Reading file %s\n", filename)
-	input, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer input.Close()
-	lines := readInput(input)
+	lines := common.ReadStringsFromFile("input.txt")
 	fmt.Printf("Part 1. Answer = %d\n", part1(lines))
 	fmt.Printf("Part 2. Answer = %d\n", part2(lines))
-}
-
-func readInput(r io.Reader) []string {
-	var lines []string
-	input := bufio.NewScanner(r)
-	for input.Scan() {
-		lines = append(lines, input.Text())
-	}
-	return lines
 }
 
 func part1(lines []string) int {

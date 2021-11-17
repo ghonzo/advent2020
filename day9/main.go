@@ -2,11 +2,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
-	"strconv"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 // Day 9: Encoding Error
@@ -14,31 +12,11 @@ import (
 // Part 2 answer: 96081673
 func main() {
 	fmt.Println("Advent of Code 2020, Day 9")
-	const filename = "input.txt"
-	fmt.Printf("Reading file %s\n", filename)
-	input, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer input.Close()
-	numbers := readNumbers(input)
+	numbers := common.ReadIntsFromFile("input.txt")
 	invalid := findFirstInvalid(numbers, 25)
 	fmt.Printf("Part 1. answer = %d\n", invalid)
 	part2 := findPart2(numbers, invalid)
 	fmt.Printf("Part 2. answer = %d\n", part2)
-}
-
-func readNumbers(r io.Reader) []int {
-	var numbers []int
-	input := bufio.NewScanner(r)
-	for input.Scan() {
-		n, err := strconv.Atoi(input.Text())
-		if err != nil {
-			panic(err)
-		}
-		numbers = append(numbers, n)
-	}
-	return numbers
 }
 
 func findFirstInvalid(numbers []int, window int) int {

@@ -2,13 +2,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 // Day 14: Docking Data
@@ -16,25 +15,9 @@ import (
 // Part 2 answer: 3705162613854
 func main() {
 	fmt.Println("Advent of Code 2020, Day 14")
-	const filename = "input.txt"
-	fmt.Printf("Reading file %s\n", filename)
-	input, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer input.Close()
-	instructions := readInput(input)
+	instructions := common.ReadStringsFromFile("input.txt")
 	fmt.Printf("Part 1. Answer = %d\n", part1(instructions))
 	fmt.Printf("Part 2. Answer = %d\n", part2(instructions))
-}
-
-func readInput(r io.Reader) []string {
-	var instructions []string
-	input := bufio.NewScanner(r)
-	for input.Scan() {
-		instructions = append(instructions, input.Text())
-	}
-	return instructions
 }
 
 var mem = regexp.MustCompile(`mem\[(\d+)\] = (\d+)`)
