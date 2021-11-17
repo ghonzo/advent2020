@@ -2,12 +2,13 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/ghonzo/advent2020/common"
 )
 
 // Day 2: Password Philosophy
@@ -47,11 +48,9 @@ type passwordPolicy struct {
 
 func readPasswordPolicies(r io.Reader) []passwordPolicy {
 	var policies []passwordPolicy
-	input := bufio.NewScanner(r)
-	for input.Scan() {
+	for _, line := range common.ReadStrings(r) {
 		var pp passwordPolicy
 		var err error
-		line := input.Text()
 		hyphenIndex := strings.Index(line, "-")
 		spaceIndex := strings.Index(line, " ")
 		pp.Min, err = strconv.Atoi(line[:hyphenIndex])

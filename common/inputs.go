@@ -11,9 +11,8 @@ import (
 // if a line cannot be coverted to an int using strconv.Atoi.
 func ReadInts(r io.Reader) []int {
 	var ints []int
-	input := bufio.NewScanner(r)
-	for input.Scan() {
-		i, err := strconv.Atoi(input.Text())
+	for _, line := range ReadStrings(r) {
+		i, err := strconv.Atoi(line)
 		if err != nil {
 			panic(err)
 		}
@@ -31,4 +30,25 @@ func ReadIntsFromFile(filename string) []int {
 	}
 	defer input.Close()
 	return ReadInts(input)
+}
+
+// ReadStrings reads a file and returns a string slice, each strings representing a line
+func ReadStrings(r io.Reader) []string {
+	var strings []string
+	input := bufio.NewScanner(r)
+	for input.Scan() {
+		strings = append(strings, input.Text())
+	}
+	return strings
+}
+
+// ReadStringsFromFile expects a filename and returns a slice of strings, one per file in that file.
+// It will panic is there is an error opening the file.
+func ReadStringsFromFile(filename string) []string {
+	input, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer input.Close()
+	return ReadStrings(input)
 }

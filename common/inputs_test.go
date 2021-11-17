@@ -37,3 +37,24 @@ func TestReadInts_panic(t *testing.T) {
 
 	ReadInts(strings.NewReader("0\nNot an int\n2"))
 }
+
+func TestReadStrings(t *testing.T) {
+	type args struct {
+		r io.Reader
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{"normal", args{strings.NewReader("0\n\n+2\nfoo bar")}, []string{"0", "", "+2", "foo bar"}},
+		{"empty", args{strings.NewReader("")}, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ReadStrings(tt.args.r); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ReadStrings() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
